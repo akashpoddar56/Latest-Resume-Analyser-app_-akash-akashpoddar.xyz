@@ -62,10 +62,10 @@ const PointCard: React.FC<{ point: ResumePointAnalysis }> = ({ point }) => (
       </p>
       <StrengthBadge strength={point.strength} />
     </div>
-    <p className="text-sm mb-2"><strong className="font-semibold">Justification:</strong> {point.justification}</p>
+    <p className="text-sm mb-2"><strong className="font-bold">Justification:</strong> {point.justification}</p>
     {point.suggestion && (
       <div className="text-sm bg-slate-50 p-2 rounded border border-slate-200">
-        <strong className="font-semibold text-brand-secondary">Suggestion:</strong> {point.suggestion}
+        <strong className="font-bold text-brand-secondary">Suggestion:</strong> {point.suggestion}
         <CharacterCount length={point.suggestion.length} />
       </div>
     )}
@@ -78,9 +78,9 @@ const MisalignedPointCard: React.FC<{ item: { point: string; reason: string; sug
         Original: "{item.point}"
         <CharacterCount length={item.point.length} />
      </p>
-     <p className="mb-2"><strong className="font-semibold text-red-600">Reason for Misalignment:</strong> {item.reason}</p>
+     <p className="mb-2"><strong className="font-bold text-red-600">Reason for Misalignment:</strong> {item.reason}</p>
      <div className="bg-green-50 p-3 rounded-md border border-green-200">
-        <p className="font-semibold text-green-800">💡 Suggested Improvement:</p>
+        <p className="font-bold text-green-800">💡 Suggested Improvement:</p>
         <p className="text-green-700">
             {item.suggestion}
             <CharacterCount length={item.suggestion.length} />
@@ -104,7 +104,7 @@ const AnalysisResult: React.FC<AnalysisResultProps> = ({ result }) => {
         <AnalysisSection title="Keyword Alignment">
           {result.keywordAnalysis.matchedKeywords.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-slate-700 mb-3">✅ Matched Keywords</h3>
+              <h3 className="text-lg font-bold text-slate-700 mb-3">✅ Matched Keywords</h3>
               <div className="flex flex-wrap gap-2">
                 {result.keywordAnalysis.matchedKeywords.map((keyword, index) => (
                   <KeywordBadge key={`matched-${index}`} keyword={keyword} type="matched" />
@@ -114,7 +114,7 @@ const AnalysisResult: React.FC<AnalysisResultProps> = ({ result }) => {
           )}
           {result.keywordAnalysis.missingKeywords.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-slate-700 mb-3">🔍 Missing Keywords</h3>
+              <h3 className="text-lg font-bold text-slate-700 mb-3">🔍 Missing Keywords</h3>
               <p className="text-sm text-slate-500 mb-3">Consider incorporating these keywords from the job description into your resume where relevant.</p>
               <div className="flex flex-wrap gap-2">
                 {result.keywordAnalysis.missingKeywords.map((keyword, index) => (

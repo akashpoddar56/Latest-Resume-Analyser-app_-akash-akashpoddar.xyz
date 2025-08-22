@@ -71,17 +71,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToAnalyzer }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
               <div className="flex flex-col items-center">
                 <TargetIcon />
-                <h4 className="text-xl font-semibold mt-4 mb-2">Keyword Optimization</h4>
+                <h4 className="text-xl font-bold mt-4 mb-2">Keyword Optimization</h4>
                 <p className="text-slate-600">Pinpoint missing keywords and align your resume with what recruiters are searching for.</p>
               </div>
               <div className="flex flex-col items-center">
                 <TrendingUpIcon />
-                <h4 className="text-xl font-semibold mt-4 mb-2">Strength & Weakness Breakdown</h4>
+                <h4 className="text-xl font-bold mt-4 mb-2">Strength & Weakness Breakdown</h4>
                 <p className="text-slate-600">Get a bullet-by-bullet analysis of your experience, highlighting what's strong and where you can improve.</p>
               </div>
               <div className="flex flex-col items-center">
                 <CheckCircleIcon />
-                <h4 className="text-xl font-semibold mt-4 mb-2">Actionable Suggestions</h4>
+                <h4 className="text-xl font-bold mt-4 mb-2">Actionable Suggestions</h4>
                 <p className="text-slate-600">Receive concrete suggestions to rewrite weak points and better showcase your achievements.</p>
               </div>
             </div>

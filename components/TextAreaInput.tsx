@@ -20,7 +20,7 @@ const TextAreaInput: React.FC<TextAreaInputProps> = ({
 }) => {
   return (
     <div className="w-full">
-      <label htmlFor={id} className="block text-lg font-semibold text-slate-700 mb-2">
+      <label htmlFor={id} className="block text-lg font-bold text-slate-700 mb-2">
         {label}
       </label>
       <textarea
