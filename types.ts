@@ -1,4 +1,5 @@
 
+
 export interface ResumePointAnalysis {
   point: string;
   strength: 'strong' | 'medium' | 'weak';
@@ -12,8 +13,14 @@ export interface MisalignedPoint {
   suggestion: string;
 }
 
+export interface KeywordAnalysis {
+  matchedKeywords: string[];
+  missingKeywords: string[];
+}
+
 export interface AnalysisResult {
   overallSummary: string;
+  keywordAnalysis: KeywordAnalysis;
   misalignedPoints: MisalignedPoint[];
   categorizedPoints: ResumePointAnalysis[];
 }

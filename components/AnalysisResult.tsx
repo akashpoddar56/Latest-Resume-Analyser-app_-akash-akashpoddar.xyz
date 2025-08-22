@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { AnalysisResult as AnalysisResultType, ResumePointAnalysis } from '../types';
 
@@ -18,6 +19,17 @@ const StrengthBadge: React.FC<{ strength: 'strong' | 'medium' | 'weak' }> = ({ s
   const baseClasses = 'px-2.5 py-0.5 text-xs font-semibold rounded-full capitalize';
   const colorClasses = getStrengthColorClasses(strength);
   return <span className={`${baseClasses} ${colorClasses}`}>{strength}</span>;
+};
+
+const KeywordBadge: React.FC<{ keyword: string; type: 'matched' | 'missing' }> = ({ keyword, type }) => {
+  const colorClasses = type === 'matched'
+    ? 'bg-emerald-100 text-emerald-800'
+    : 'bg-amber-100 text-amber-800';
+  return (
+    <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${colorClasses}`}>
+      {keyword}
+    </span>
+  );
 };
 
 const CharacterCount: React.FC<{ length: number }> = ({ length }) => (
@@ -87,6 +99,32 @@ const AnalysisResult: React.FC<AnalysisResultProps> = ({ result }) => {
       <AnalysisSection title="Executive Summary">
         <p className="text-slate-600 text-base">{result.overallSummary}</p>
       </AnalysisSection>
+
+      {result.keywordAnalysis && (result.keywordAnalysis.matchedKeywords.length > 0 || result.keywordAnalysis.missingKeywords.length > 0) && (
+        <AnalysisSection title="Keyword Alignment">
+          {result.keywordAnalysis.matchedKeywords.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-slate-700 mb-3">✅ Matched Keywords</h3>
+              <div className="flex flex-wrap gap-2">
+                {result.keywordAnalysis.matchedKeywords.map((keyword, index) => (
+                  <KeywordBadge key={`matched-${index}`} keyword={keyword} type="matched" />
+                ))}
+              </div>
+            </div>
+          )}
+          {result.keywordAnalysis.missingKeywords.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-slate-700 mb-3">🔍 Missing Keywords</h3>
+              <p className="text-sm text-slate-500 mb-3">Consider incorporating these keywords from the job description into your resume where relevant.</p>
+              <div className="flex flex-wrap gap-2">
+                {result.keywordAnalysis.missingKeywords.map((keyword, index) => (
+                  <KeywordBadge key={`missing-${index}`} keyword={keyword} type="missing" />
+                ))}
+              </div>
+            </div>
+          )}
+        </AnalysisSection>
+      )}
 
       {result.misalignedPoints && result.misalignedPoints.length > 0 && (
          <AnalysisSection title="Alignment Gaps & Suggestions">
