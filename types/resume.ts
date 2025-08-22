@@ -23,7 +23,13 @@ export interface ResumeEntryPlaintext {
     content: string;
 }
 
-export type ResumeEntryContent = ResumeEntryBullet | ResumeEntrySubheading | ResumeEntryPlaintext;
+export interface ResumeEntryFreestandingSubheading {
+    id: string;
+    type: 'freestanding_subheading';
+    content: string;
+}
+
+export type ResumeEntryContent = ResumeEntryBullet | ResumeEntrySubheading | ResumeEntryPlaintext | ResumeEntryFreestandingSubheading;
 
 export interface ResumeEntry {
   id: string;

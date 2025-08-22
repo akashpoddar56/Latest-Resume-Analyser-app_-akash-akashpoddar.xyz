@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 
 // Inline SVG icons for simplicity and to avoid creating multiple small files
@@ -25,10 +26,10 @@ const CheckCircleIcon = () => (
 
 
 interface LandingPageProps {
-  onNavigateToAnalyzer: () => void;
+  onGetStarted: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToAnalyzer }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 animate-fade-in">
       {/* Header */}
@@ -41,7 +42,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToAnalyzer }) => {
             <h1 className="ml-3 text-2xl md:text-3xl font-bold text-slate-800">AI Resume Analyzer</h1>
           </div>
           <button
-            onClick={onNavigateToAnalyzer}
+            onClick={onGetStarted}
             className="hidden sm:inline-flex items-center justify-center px-6 py-2 font-semibold text-white bg-brand-primary rounded-lg shadow-md hover:bg-brand-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-300"
           >
             Get Started
@@ -54,13 +55,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToAnalyzer }) => {
         <section className="text-center py-16 md:py-24">
           <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-4">Stop Guessing. Start Landing Interviews.</h2>
           <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-600 mb-8">
-            Our AI analyzes your resume against any job description, providing instant, actionable feedback to help you stand out from the competition.
+            Build a job-winning resume with our powerful editor, then get instant AI-powered feedback against any job description to help you stand out.
           </p>
           <button
-            onClick={onNavigateToAnalyzer}
+            onClick={onGetStarted}
             className="inline-flex items-center justify-center px-8 py-4 font-semibold text-lg text-white bg-brand-primary rounded-lg shadow-lg hover:bg-brand-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-300"
           >
-            Analyze Your Resume for Free
+            Start Building Your Resume
           </button>
         </section>
 

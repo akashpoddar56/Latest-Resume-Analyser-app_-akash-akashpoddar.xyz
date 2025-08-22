@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { XIcon } from './icons/XIcon';
 import { parseResume } from '../utils/resumeParser';
@@ -16,12 +15,15 @@ const RenderedHeader: React.FC<{ header: ParsedResume['header'] }> = ({ header }
   return (
     <div className="mb-2">
       <div className="flex justify-between items-center py-1">
-        <h1 style={{ fontSize: '16pt' }} className="font-bold text-gray-900 tracking-wider">
-          {header.name}
-        </h1>
-        <p className="text-right text-gray-700">
-          {header.contact}
-        </p>
+        <h1 
+          style={{ fontSize: '16pt' }} 
+          className="font-bold text-gray-900 tracking-wider"
+          dangerouslySetInnerHTML={{ __html: header.name }}
+        />
+        <p 
+          className="text-right text-gray-700"
+          dangerouslySetInnerHTML={{ __html: header.contact }}
+        />
       </div>
       <div className="border-b-[1.5px] border-gray-400" />
     </div>
@@ -34,7 +36,7 @@ const RenderedContentItem: React.FC<{ item: ResumeEntryContent }> = ({ item }) =
       return (
         <div className={`flex items-start my-1 ${item.style === 'o' ? 'pl-5' : ''}`}>
           <span className="mr-2 mt-1">{item.style}</span>
-          <p className="flex-1">{item.content}</p>
+          <p className="flex-1" dangerouslySetInnerHTML={{ __html: item.content }} />
         </div>
       );
     case 'subheading':
@@ -42,13 +44,15 @@ const RenderedContentItem: React.FC<{ item: ResumeEntryContent }> = ({ item }) =
         <div className="my-2">
           <div className="flex items-start">
             <span className="mr-2 mt-1 font-bold italic">•</span>
-            <p className="font-bold italic flex-1">{item.title}:</p>
+            <p className="font-bold italic flex-1" dangerouslySetInnerHTML={{ __html: item.title + ':'}} />
           </div>
           {item.bullets.map(bullet => <RenderedContentItem key={bullet.id} item={bullet} />)}
         </div>
       );
+    case 'freestanding_subheading':
+        return <p className="my-2 font-bold" dangerouslySetInnerHTML={{ __html: item.content }} />;
     case 'plaintext':
-      return <p className="my-1">{item.content}</p>;
+      return <p className="my-1" dangerouslySetInnerHTML={{ __html: item.content }} />;
     default:
       return null;
   }
@@ -59,10 +63,10 @@ const RenderedEntry: React.FC<{ entry: ResumeEntry }> = ({ entry }) => (
     <div className="mb-3">
         <div className="flex justify-between">
             <div>
-                <span className="font-bold text-gray-800">{entry.title}</span>
-                {entry.subtitle && <span className="text-gray-700"> | {entry.subtitle}</span>}
+                <span className="font-bold text-gray-800" dangerouslySetInnerHTML={{ __html: entry.title }} />
+                {entry.subtitle && <span className="text-gray-700" dangerouslySetInnerHTML={{__html: ` | ${entry.subtitle}`}} />}
             </div>
-            <span className="italic text-gray-600 text-right pl-4">{entry.date}</span>
+            <span className="italic text-gray-600 text-right pl-4" dangerouslySetInnerHTML={{ __html: entry.date }} />
         </div>
         <div>
             {entry.content.map(item => <RenderedContentItem key={item.id} item={item} />)}
@@ -85,7 +89,8 @@ const RenderedSection: React.FC<{ section: ResumeSectionType }> = ({ section }) 
                  <div className="my-1">
                     {(section as SkillsSection).skills.map(skill => (
                         <p key={skill.id}>
-                            <span className="font-bold">{skill.category}:</span> {skill.details}
+                            <span className="font-bold" dangerouslySetInnerHTML={{ __html: skill.category }} />:&#160;
+                            <span dangerouslySetInnerHTML={{ __html: skill.details }} />
                         </p>
                     ))}
                 </div>

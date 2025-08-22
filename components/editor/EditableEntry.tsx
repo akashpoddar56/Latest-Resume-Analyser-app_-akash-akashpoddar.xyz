@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { ResumeEntry, ResumeEntryContent, ResumeEntryBullet, ResumeEntrySubheading, ResumeEntryPlaintext } from '../../types/resume';
 import { TrashIcon } from '../icons/TrashIcon';
@@ -8,6 +7,7 @@ interface EditableEntryProps {
     entry: ResumeEntry;
     updateEntry: (updatedEntry: ResumeEntry) => void;
     deleteEntry: () => void;
+    isDeletable?: boolean;
 }
 
 const EditableContentItem: React.FC<{
@@ -17,7 +17,7 @@ const EditableContentItem: React.FC<{
 }> = ({ item, updateItem, deleteItem }) => {
     
     const handleBlur = (e: React.FocusEvent<HTMLDivElement>, field: 'content' | 'title') => {
-        updateItem({ ...item, [field]: e.currentTarget.textContent || '' });
+        updateItem({ ...item, [field]: e.currentTarget.innerHTML || '' });
     };
 
     const handleSubBulletChange = (subBulletId: string, newText: string) => {
@@ -48,7 +48,8 @@ const EditableContentItem: React.FC<{
                             contentEditable suppressContentEditableWarning
                             onBlur={e => handleBlur(e, 'content')}
                             className="flex-1 focus:outline-none focus:bg-indigo-50 rounded px-1"
-                        >{item.content}</div>
+                            dangerouslySetInnerHTML={{ __html: item.content }}
+                        />
                     </div>
                 );
             case 'subheading':
@@ -60,16 +61,19 @@ const EditableContentItem: React.FC<{
                                 contentEditable suppressContentEditableWarning
                                 onBlur={e => handleBlur(e, 'title')}
                                 className="font-bold italic flex-1 focus:outline-none focus:bg-indigo-50 rounded px-1"
-                            >{item.title}:</div>
+                                dangerouslySetInnerHTML={{ __html: item.title }}
+                            />
+                             <span className="font-bold italic">:</span>
                         </div>
                         {item.bullets.map(b => (
                             <div key={b.id} className="flex items-start pl-5 my-1 group/sub-bullet relative">
                                 <span className="mr-2 mt-1 select-none">o</span>
                                 <div 
                                     contentEditable suppressContentEditableWarning
-                                    onBlur={e => handleSubBulletChange(b.id, e.currentTarget.textContent || '')}
+                                    onBlur={e => handleSubBulletChange(b.id, e.currentTarget.innerHTML || '')}
                                     className="flex-1 focus:outline-none focus:bg-indigo-50 rounded px-1"
-                                >{b.content}</div>
+                                    dangerouslySetInnerHTML={{ __html: b.content }}
+                                />
                                  <div 
                                     onClick={() => deleteSubBullet(b.id)}
                                     className="absolute top-0 right-0 p-0.5 bg-slate-100 text-slate-400 rounded-full cursor-pointer opacity-0 group-hover/sub-bullet:opacity-100 hover:bg-red-100 hover:text-red-500 transition-opacity"
@@ -86,6 +90,17 @@ const EditableContentItem: React.FC<{
                         </div>
                     </div>
                 );
+            case 'freestanding_subheading':
+                return (
+                    <div className="w-full my-1">
+                        <div 
+                            contentEditable suppressContentEditableWarning
+                            onBlur={e => handleBlur(e, 'content')}
+                            className="flex-1 focus:outline-none focus:bg-indigo-50 rounded px-1 font-bold"
+                            dangerouslySetInnerHTML={{ __html: item.content }}
+                        />
+                    </div>
+                );
             case 'plaintext':
                 return (
                     <div className="w-full">
@@ -93,7 +108,8 @@ const EditableContentItem: React.FC<{
                             contentEditable suppressContentEditableWarning
                             onBlur={e => handleBlur(e, 'content')}
                             className="flex-1 focus:outline-none focus:bg-indigo-50 rounded px-1"
-                        >{item.content}</div>
+                            dangerouslySetInnerHTML={{ __html: item.content }}
+                        />
                     </div>
                 );
         }
@@ -114,7 +130,7 @@ const EditableContentItem: React.FC<{
 };
 
 
-const EditableEntry: React.FC<EditableEntryProps> = ({ entry, updateEntry, deleteEntry }) => {
+const EditableEntry: React.FC<EditableEntryProps> = ({ entry, updateEntry, deleteEntry, isDeletable = true }) => {
     
     const handleFieldChange = (field: 'title' | 'subtitle' | 'date', value: string) => {
         updateEntry({ ...entry, [field]: value });
@@ -142,33 +158,38 @@ const EditableEntry: React.FC<EditableEntryProps> = ({ entry, updateEntry, delet
     
     return (
         <div className="mb-4 p-3 relative group border border-transparent hover:border-slate-200 rounded-md">
-             <div 
-                onClick={deleteEntry}
-                className="absolute top-2 right-2 p-1 bg-slate-100 text-slate-500 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-600 transition-opacity"
-                title="Delete this entire entry"
-             >
-                <TrashIcon className="w-4 h-4" />
-            </div>
+            {isDeletable && (
+                <div 
+                    onClick={deleteEntry}
+                    className="absolute top-2 right-2 p-1 bg-slate-100 text-slate-500 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-600 transition-opacity"
+                    title="Delete this entire entry"
+                >
+                    <TrashIcon className="w-4 h-4" />
+                </div>
+            )}
 
             <div className="flex justify-between" style={{ fontSize: '11pt' }}>
-                <div>
+                <div className="flex-1">
                     <span 
                         contentEditable suppressContentEditableWarning 
-                        onBlur={e => handleFieldChange('title', e.currentTarget.textContent || '')} 
+                        onBlur={e => handleFieldChange('title', e.currentTarget.innerHTML || '')} 
                         className="font-bold text-gray-800 focus:outline-none focus:bg-indigo-50 rounded px-1"
-                    >{entry.title}</span>
+                        dangerouslySetInnerHTML={{ __html: entry.title }}
+                    />
                     <span className="text-gray-700"> | </span>
                     <span 
                         contentEditable suppressContentEditableWarning 
-                        onBlur={e => handleFieldChange('subtitle', e.currentTarget.textContent || '')}
+                        onBlur={e => handleFieldChange('subtitle', e.currentTarget.innerHTML || '')}
                         className="text-gray-700 focus:outline-none focus:bg-indigo-50 rounded px-1"
-                    >{entry.subtitle}</span>
+                        dangerouslySetInnerHTML={{ __html: entry.subtitle }}
+                    />
                 </div>
                 <span 
                     contentEditable suppressContentEditableWarning 
-                    onBlur={e => handleFieldChange('date', e.currentTarget.textContent || '')}
+                    onBlur={e => handleFieldChange('date', e.currentTarget.innerHTML || '')}
                     className="italic text-gray-600 text-right pl-4 focus:outline-none focus:bg-indigo-50 rounded px-1"
-                >{entry.date}</span>
+                    dangerouslySetInnerHTML={{ __html: entry.date }}
+                />
             </div>
             
             <div style={{ fontSize: '11pt' }}>

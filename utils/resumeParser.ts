@@ -1,4 +1,4 @@
-import type { ParsedResume, ResumeHeader, ResumeSection, StandardSection, SkillsSection, ResumeEntry, ResumeEntryBullet, ResumeEntrySubheading, Skill, ResumeEntryContent, ResumeEntryPlaintext } from '../types/resume';
+import type { ParsedResume, ResumeHeader, ResumeSection, StandardSection, SkillsSection, ResumeEntry, ResumeEntryBullet, ResumeEntrySubheading, Skill, ResumeEntryContent, ResumeEntryPlaintext, ResumeEntryFreestandingSubheading } from '../types/resume';
 
 // A shared list of headers for consistent parsing across the app.
 export const SECTION_HEADERS = [
@@ -37,38 +37,45 @@ const isSectionHeaderLine = (line: string): string | null => {
 }
 
 const isDateOnRight = (line: string): { main: string; date: string } | null => {
-    // Regex to find a date pattern at the end of the line, possibly preceded by a tab or multiple spaces.
-    const datePattern = /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|Current)[\w\s,–-]*\d{2,4})\s*$/i;
-    const match = line.match(datePattern);
-    if (match && match[0]) {
-        const date = match[0].trim();
-        const main = line.substring(0, match.index).trim();
-        // Avoid matching section headers as entries
-        if (isSectionHeaderLine(main)) return null;
-        return { main, date };
+    // Rely on tab separation for robustness with HTML content
+    const parts = line.split('\t');
+    if (parts.length > 1) {
+        const potentialDate = parts[parts.length - 1];
+        const textOnlyDate = potentialDate.replace(/<[^>]*>/g, '');
+        const datePattern = /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|Current)[\w\s,–-]*\d{2,4})/i;
+
+        if (datePattern.test(textOnlyDate)) {
+            const date = potentialDate.trim();
+            const main = parts.slice(0, -1).join('\t').trim();
+            const textOnlyMain = main.replace(/<[^>]*>/g, '');
+            // Avoid matching section headers as entries
+            if (isSectionHeaderLine(textOnlyMain)) return null;
+            return { main, date };
+        }
     }
     return null;
 }
 
 const parseHeader = (line: string): ResumeHeader | null => {
-    // Look for a distinct separation (pipe or multiple spaces/tab) between what looks like a name and contact info.
-    const parts = line.split(/\|| \t+| {3,}/);
-    if (parts.length > 1 && isNaN(parseInt(parts[0].trim()))) { // Ensure the first part isn't just a number
+    // Rely on tab separation between name and contact info
+    const parts = line.split('\t');
+    const textOnlyFirstPart = (parts[0] || '').trim().replace(/<[^>]*>/g, '');
+    if (parts.length > 1 && isNaN(parseInt(textOnlyFirstPart))) { 
         return {
             name: parts[0].trim(),
-            contact: parts.slice(1).join(' | ').trim(),
+            contact: parts.slice(1).join('\t').trim(),
         };
     }
     return null;
 }
 
 const parseSkillLine = (line: string): Skill | null => {
-    const parts = line.split(':');
-    if (parts.length > 1) {
+    const separatorIndex = line.indexOf(':');
+    if (separatorIndex > -1) {
         return {
             id: self.crypto.randomUUID(),
-            category: parts[0].trim(),
-            details: parts.slice(1).join(':').trim(),
+            category: line.substring(0, separatorIndex).trim(),
+            details: line.substring(separatorIndex + 1).trim(),
         };
     }
     return null;
@@ -104,7 +111,7 @@ export const parseResume = (text: string): ParsedResume => {
         const trimmedLine = line.trim();
         if (!trimmedLine) continue;
 
-        const sectionHeader = isSectionHeaderLine(trimmedLine);
+        const sectionHeader = isSectionHeaderLine(trimmedLine.replace(/<[^>]*>/g, ''));
         if (sectionHeader) {
             if (currentSection) sections.push(currentSection);
             currentEntry = null;
@@ -145,7 +152,6 @@ export const parseResume = (text: string): ParsedResume => {
 
             if (currentEntry) {
                 // This line belongs to the current entry.
-                // More robust bullet/subheading detection.
                 const mainBulletMatch = trimmedLine.match(/^[•*]\s?(.*)/);
                 const subBulletMatch = trimmedLine.match(/^[o]\s?(.*)/);
                 const subheadingMatch = mainBulletMatch?.[1]?.match(/(.+?):(.*)/);
@@ -172,8 +178,21 @@ export const parseResume = (text: string): ParsedResume => {
                         currentEntry.content.push({ id: self.crypto.randomUUID(), type: 'bullet', style: 'o', content: subBulletMatch[1].trim() });
                     }
                 } else {
-                     // This is a plaintext line, preserve it!
-                    currentEntry.content.push({ id: self.crypto.randomUUID(), type: 'plaintext', content: trimmedLine });
+                    // This could be a freestanding subheading or just plaintext.
+                    // Look ahead to see if the next non-empty line is a bullet point.
+                    let nextNonEmptyLine = '';
+                    for (let j = lineIndex + 1; j < lines.length; j++) {
+                        if (lines[j].trim()) {
+                            nextNonEmptyLine = lines[j].trim();
+                            break;
+                        }
+                    }
+
+                    if (nextNonEmptyLine.match(/^[•*o]\s/)) {
+                         currentEntry.content.push({ id: self.crypto.randomUUID(), type: 'freestanding_subheading', content: trimmedLine });
+                    } else {
+                         currentEntry.content.push({ id: self.crypto.randomUUID(), type: 'plaintext', content: trimmedLine });
+                    }
                 }
             }
         }
@@ -195,6 +214,7 @@ const reconstructEntryContent = (item: ResumeEntryContent): string => {
             return subText;
         case 'bullet':
             return `${item.style === 'o' ? '  o' : '•'} ${item.content}\n`;
+        case 'freestanding_subheading':
         case 'plaintext':
             return `${item.content}\n`;
         default:
@@ -213,9 +233,18 @@ export const reconstructResume = (parsed: ParsedResume): string => {
 
     // Reconstruct Sections
     parsed.sections.forEach((section, index) => {
+        const isStandard = isStandardSection(section);
+        const isSkills = isSkillsSection(section);
+        
+        const isSectionEmpty = 
+            (isStandard && section.entries.length === 0) || 
+            (isSkills && section.skills.length === 0);
+
+        if (isSectionEmpty) return;
+
         text += `${section.title.toUpperCase()}\n`;
         
-        if (isStandardSection(section)) {
+        if (isStandard) {
             section.entries.forEach(entry => {
                 const titleLine = [entry.title, entry.subtitle].filter(Boolean).join(' | ');
                 text += `${titleLine}\t${entry.date}\n`;
@@ -225,7 +254,7 @@ export const reconstructResume = (parsed: ParsedResume): string => {
             });
         }
 
-        if (isSkillsSection(section)) {
+        if (isSkills) {
             section.skills.forEach(skill => {
                  if (skill.category && skill.category !== 'General') {
                     text += `${skill.category}: ${skill.details}\n`;
@@ -235,7 +264,14 @@ export const reconstructResume = (parsed: ParsedResume): string => {
             });
         }
 
-        if (index < parsed.sections.length - 1) {
+        // Check if there are more non-empty sections to add a newline
+        const remainingSections = parsed.sections.slice(index + 1);
+        const hasMoreContent = remainingSections.some(s => 
+            (isStandardSection(s) && s.entries.length > 0) || 
+            (isSkillsSection(s) && s.skills.length > 0)
+        );
+
+        if (hasMoreContent) {
             text += '\n';
         }
     });

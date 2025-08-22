@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import LandingPage from './pages/LandingPage';
 import AnalyzerPage from './pages/AnalyzerPage';
@@ -8,10 +9,6 @@ import { defaultResume } from './constants/resume';
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<'landing' | 'analyzer' | 'editor'>('landing');
   const [resumeText, setResumeText] = useState<string>(defaultResume);
-
-  const navigateToAnalyzer = () => {
-    setCurrentPage('analyzer');
-  };
 
   const navigateToEditor = () => {
     setCurrentPage('editor');
@@ -25,7 +22,7 @@ const App: React.FC = () => {
   // Conditionally render the page based on state
   switch (currentPage) {
     case 'landing':
-      return <LandingPage onNavigateToAnalyzer={navigateToAnalyzer} />;
+      return <LandingPage onGetStarted={navigateToEditor} />;
     case 'analyzer':
       return (
         <AnalyzerPage
@@ -43,7 +40,7 @@ const App: React.FC = () => {
         />
       );
     default:
-      return <LandingPage onNavigateToAnalyzer={navigateToAnalyzer} />;
+      return <LandingPage onGetStarted={navigateToEditor} />;
   }
 };
 
