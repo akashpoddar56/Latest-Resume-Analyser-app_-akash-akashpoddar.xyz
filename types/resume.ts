@@ -37,6 +37,7 @@ export interface ResumeEntry {
   subtitle: string; // e.g., "Saraswati Material Science (Saraswati Group of Companies)"
   date: string;
   content: ResumeEntryContent[];
+  isBoxed?: boolean;
 }
 
 export interface Skill {

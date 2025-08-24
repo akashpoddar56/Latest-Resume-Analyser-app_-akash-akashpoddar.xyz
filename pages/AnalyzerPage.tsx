@@ -1,15 +1,14 @@
 
 
 
+
 import React, { useState, useCallback } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import Header from '../components/Header';
 import TextAreaInput from '../components/TextAreaInput';
 import AnalysisResult from '../components/AnalysisResult';
 import Spinner from '../components/Spinner';
-import ResumePreview from '../components/ResumePreview';
 import { SparklesIcon } from '../components/icons/SparklesIcon';
-import { EyeIcon } from '../components/icons/EyeIcon';
 import { EditIcon } from '../components/icons/EditIcon';
 import type { AnalysisResult as AnalysisResultType } from '../types';
 
@@ -83,7 +82,6 @@ const AnalyzerPage: React.FC<AnalyzerPageProps> = ({ resumeText, onSetResumeText
   const [analysisResult, setAnalysisResult] = useState<AnalysisResultType | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState<boolean>(false);
 
   const handleAnalyze = useCallback(async () => {
     if (!resumeText.trim() || !jdText.trim()) {
@@ -174,21 +172,11 @@ const AnalyzerPage: React.FC<AnalyzerPageProps> = ({ resumeText, onSetResumeText
             <div className="text-center mb-8 flex flex-col sm:flex-row justify-center items-center gap-4">
                <button
                 onClick={onNavigateToEditor}
-                disabled={!resumeText.trim()}
-                className="inline-flex items-center justify-center px-8 py-3 font-semibold text-slate-700 bg-white border-2 border-slate-300 rounded-lg shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-300 disabled:bg-slate-100 disabled:border-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed"
-                aria-label="Edit Resume Sections"
+                className="inline-flex items-center justify-center px-8 py-3 font-semibold text-slate-700 bg-white border-2 border-slate-300 rounded-lg shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-300"
+                aria-label="Edit Resume"
               >
                 <EditIcon className="w-5 h-5 mr-2" />
-                Edit Sections
-              </button>
-              <button
-                onClick={() => setShowPreview(true)}
-                disabled={!resumeText.trim()}
-                className="inline-flex items-center justify-center px-8 py-3 font-semibold text-brand-primary bg-white border-2 border-brand-primary rounded-lg shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-300 disabled:bg-slate-100 disabled:border-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed"
-                aria-label="Preview Resume"
-              >
-                <EyeIcon className="w-5 h-5 mr-2" />
-                Preview Resume
+                Edit Resume
               </button>
               <button
                 onClick={handleAnalyze}
@@ -220,12 +208,6 @@ const AnalyzerPage: React.FC<AnalyzerPageProps> = ({ resumeText, onSetResumeText
           </div>
         </main>
       </div>
-      {showPreview && (
-        <ResumePreview 
-          resumeText={resumeText} 
-          onClose={() => setShowPreview(false)} 
-        />
-      )}
     </>
   );
 };

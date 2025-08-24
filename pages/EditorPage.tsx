@@ -1,9 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { parseResume, reconstructResume } from '../utils/resumeParser';
 import type { ParsedResume, ResumeSection, StandardSection, SkillsSection } from '../types/resume';
 import EditableSection from '../components/editor/EditableSection';
+import ResumePreview from '../components/ResumePreview';
+import Spinner from '../components/Spinner';
 import { BoldIcon } from '../components/icons/BoldIcon';
+import { DownloadIcon } from '../components/icons/DownloadIcon';
+import { SettingsIcon } from '../components/icons/SettingsIcon';
 import { DEFAULT_SECTION_TITLES } from '../constants/resume';
+
+// --- Type Declarations for CDN Libraries ---
+declare var html2canvas: any;
+declare global {
+    interface Window {
+        jspdf: any;
+    }
+}
 
 // --- Helper Components ---
 
@@ -16,7 +28,7 @@ const LightbulbIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 const QuickTips: React.FC = () => (
-  <div className="sticky top-24 bg-white p-6 rounded-lg shadow-lg border border-slate-200">
+  <div className="bg-white p-6 rounded-lg shadow-lg border border-slate-200">
     <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center">
       <LightbulbIcon className="w-6 h-6 mr-2 text-yellow-500" />
       Resume Writing Tips
@@ -34,16 +46,21 @@ const QuickTips: React.FC = () => (
         <span className="mr-2.5 mt-1 text-brand-primary font-bold">✓</span>
         <span>Tailor your skills and experience to the <strong>job description's keywords</strong>.</span>
       </li>
-      <li className="flex items-start">
-        <span className="mr-2.5 mt-1 text-brand-primary font-bold">✓</span>
-        <span>Keep the resume concise. Aim for <strong>one page</strong> if you have under 10 years of experience.</span>
-      </li>
-      <li className="flex items-start">
-        <span className="mr-2.5 mt-1 text-brand-primary font-bold">✓</span>
-        <span><strong>Proofread</strong> multiple times to eliminate any spelling or grammar errors.</span>
-      </li>
     </ul>
   </div>
+);
+
+const MarginInput: React.FC<{ label: string; name: string; value: number; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; }> = ({ label, name, value, onChange }) => (
+    <div className="relative">
+        <label htmlFor={name} className="absolute -top-1.5 left-2 text-[10px] bg-slate-100 px-1 text-slate-500">{label}</label>
+        <input
+            type="number"
+            id={name} name={name} value={value} onChange={onChange}
+            className="w-16 pl-2 pr-6 py-1 border border-slate-300 rounded-md shadow-sm focus:ring-1 focus:ring-brand-primary focus:border-brand-primary text-sm"
+            step="0.1" title={`${label} margin`}
+        />
+        <span className="absolute inset-y-0 right-0 pr-1.5 flex items-center text-xs text-slate-500 pointer-events-none">cm</span>
+    </div>
 );
 
 
@@ -57,6 +74,9 @@ interface EditorPageProps {
 
 const EditorPage: React.FC<EditorPageProps> = ({ initialResumeText, onSaveChanges, onCancel }) => {
   const [resume, setResume] = useState<ParsedResume>({ header: null, sections: [] });
+  const [margins, setMargins] = useState({ top: 0.5, right: 0.5, bottom: 0.5, left: 0.5 });
+  const [isDownloading, setIsDownloading] = useState(false);
+  const resumePreviewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const parsed = parseResume(initialResumeText);
@@ -74,13 +94,23 @@ const EditorPage: React.FC<EditorPageProps> = ({ initialResumeText, onSaveChange
             id: parsedSection?.id || self.crypto.randomUUID(),
             title: 'EDUCATION',
             entries: [
-                // Masters
-                { id: self.crypto.randomUUID(), title: "Master's Degree Title", subtitle: "University Name", date: "Month Year - Month Year", content: [{ id: self.crypto.randomUUID(), type: 'bullet', style: 'o', content: 'Optional: GPA, relevant coursework, or honors.' }] },
-                // Bachelors
-                { id: self.crypto.randomUUID(), title: "Bachelor's Degree Title", subtitle: "University Name", date: "Month Year - Month Year", content: [{ id: self.crypto.randomUUID(), type: 'bullet', style: 'o', content: 'Optional: GPA, relevant coursework, or honors.' }] },
-                // 12th
+                { 
+                    id: self.crypto.randomUUID(),
+                    title: "<b>MSc. Strategic Entrepreneurship & Innovation | King's College London | 4/4 GPA, distinction (top 5% of 200)</b>",
+                    subtitle: '',
+                    date: "<b>Sep 19 – Sep 20</b>",
+                    content: [],
+                    isBoxed: true,
+                },
+                {
+                    id: self.crypto.randomUUID(),
+                    title: "<b>B.B.A. (International Business) | Pune University | 7/10 GPA, first-class distinction (top 10% of 350)</b>",
+                    subtitle: '',
+                    date: "<b>Jun 15 – Jun 18</b>",
+                    content: [],
+                    isBoxed: true,
+                },
                 { id: self.crypto.randomUUID(), title: "Class 12th", subtitle: "School Name, City", date: "Year", content: [{ id: self.crypto.randomUUID(), type: 'bullet', style: 'o', content: 'Optional: Percentage/GPA or key achievements.' }] },
-                // 10th
                 { id: self.crypto.randomUUID(), title: "Class 10th", subtitle: "School Name, City", date: "Year", content: [{ id: self.crypto.randomUUID(), type: 'bullet', style: 'o', content: 'Optional: Percentage/GPA.' }] }
             ]
         };
@@ -105,11 +135,6 @@ const EditorPage: React.FC<EditorPageProps> = ({ initialResumeText, onSaveChange
       sections: [...structuredSections, ...remainingSections],
     });
   }, [initialResumeText]);
-
-
-  const handleResumeChange = useCallback((newResumeState: ParsedResume) => {
-    setResume(newResumeState);
-  }, []);
 
   const handleSave = () => {
     const reconstructedText = reconstructResume(resume);
@@ -149,42 +174,107 @@ const EditorPage: React.FC<EditorPageProps> = ({ initialResumeText, onSaveChange
   const handleBoldClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     document.execCommand('bold');
-  }
+  };
+
+  const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setMargins(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!resumePreviewRef.current || typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+        alert("PDF generation library is not loaded. Please refresh the page and try again.");
+        return;
+    }
+    
+    setIsDownloading(true);
+    try {
+        const canvas = await html2canvas(resumePreviewRef.current, {
+            scale: 2, // Using a slightly lower scale to prevent memory issues on large documents.
+            useCORS: true,
+            logging: false,
+            // Let html2canvas automatically determine the width and height from the element.
+            // Explicitly setting windowWidth/Height can sometimes be less reliable.
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+        
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save('resume.pdf');
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        alert("An error occurred while generating the PDF. Please check the console for details.");
+    } finally {
+        setIsDownloading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-slate-100 animate-fade-in">
-      <header className="sticky top-0 bg-white shadow-md z-10">
-        <div className="container mx-auto px-4 py-4 md:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-slate-800">Resume Editor</h1>
+      <header className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-md z-20">
+        <div className="container mx-auto px-4 py-3 md:px-8 flex justify-between items-center">
+          <h1 className="text-xl font-bold text-slate-800">Resume Editor</h1>
           <div className="flex gap-2 sm:gap-4 items-center">
+             <div className="hidden xl:flex items-center gap-2 border-r border-slate-200 pr-3">
+                <SettingsIcon className="w-5 h-5 text-slate-500" title="Page Margins" />
+                <MarginInput label="Top" name="top" value={margins.top} onChange={handleMarginChange} />
+                <MarginInput label="Bottom" name="bottom" value={margins.bottom} onChange={handleMarginChange} />
+                <MarginInput label="Left" name="left" value={margins.left} onChange={handleMarginChange} />
+                <MarginInput label="Right" name="right" value={margins.right} onChange={handleMarginChange} />
+            </div>
              <button
               type="button"
               onMouseDown={handleBoldClick}
-              className="inline-flex items-center justify-center p-2 h-10 w-10 font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
+              className="p-2 h-9 w-9 flex items-center justify-center font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
               title="Bold"
             >
               <BoldIcon className="w-5 h-5" />
             </button>
             <button
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-brand-primary bg-white border-2 border-brand-primary rounded-lg shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-300 disabled:bg-slate-300 disabled:text-slate-500 disabled:border-slate-300 disabled:cursor-not-allowed"
+                aria-label="Download as PDF"
+            >
+                {isDownloading ? <Spinner className="text-brand-primary" /> : <DownloadIcon className="w-5 h-5" />}
+                <span className="hidden sm:inline ml-2">Download</span>
+            </button>
+            <button
               onClick={onCancel}
-              className="inline-flex items-center justify-center px-6 py-2 font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
+              className="hidden sm:inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="inline-flex items-center justify-center px-6 py-2 font-semibold text-white bg-brand-primary rounded-lg shadow-md hover:bg-brand-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all"
+              className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-white bg-brand-primary rounded-lg shadow-md hover:bg-brand-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all"
             >
-              Save Changes
+              Save
             </button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto p-4 md:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <div className="lg:col-span-2">
-                <div className="bg-white shadow-lg p-12" style={{ fontFamily: 'Calibri, sans-serif' }}>
+      <main className="w-full overflow-auto p-4 md:p-8">
+        <div className="flex flex-row gap-8 mx-auto" style={{ width: 'fit-content' }}>
+            {/* Editor Pane */}
+            <div>
+                <div 
+                  className="bg-white shadow-lg"
+                  style={{
+                    fontFamily: 'Calibri, sans-serif',
+                    width: '216mm',
+                    minHeight: '279mm',
+                    padding: '0.5cm',
+                    boxSizing: 'border-box',
+                  }}
+                >
                   {resume.header && (
                       <div className="mb-4 pb-2 border-b-[1.5px] border-gray-400">
                           <div className="flex justify-between items-center py-1">
@@ -230,8 +320,18 @@ const EditorPage: React.FC<EditorPageProps> = ({ initialResumeText, onSaveChange
                   </div>
                 </div>
             </div>
-            <div className="lg:col-span-1">
-              <QuickTips />
+            {/* Preview Pane */}
+            <div className="hidden lg:block">
+                <ResumePreview 
+                    parsedResume={resume}
+                    margins={margins}
+                    contentRef={resumePreviewRef}
+                />
+            </div>
+        </div>
+        <div className="max-w-[calc(216mm)] mx-auto mt-8 xl:hidden">
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm p-4 rounded-lg">
+                <strong>Note:</strong> The live preview is hidden on smaller screens. Please widen your browser window to see the editor and preview side-by-side.
             </div>
         </div>
       </main>

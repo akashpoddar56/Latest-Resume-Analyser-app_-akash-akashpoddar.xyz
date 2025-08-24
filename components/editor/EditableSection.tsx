@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ResumeSection, StandardSection, SkillsSection, Skill } from '../../types/resume';
+import type { ResumeSection, StandardSection, SkillsSection, Skill, ResumeEntry } from '../../types/resume';
 import EditableEntry from './EditableEntry';
 import { TrashIcon } from '../icons/TrashIcon';
 import { PlusIcon } from '../icons/PlusIcon';
@@ -84,7 +84,7 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, updateSectio
         updateSection(updatedSection);
     };
 
-    const updateEntry = (index: number, updatedEntry: StandardSection['entries'][0]) => {
+    const updateEntry = (index: number, updatedEntry: ResumeEntry) => {
         if (!isStandardSection(section)) return;
         const newEntries = [...section.entries];
         newEntries[index] = updatedEntry;
@@ -97,12 +97,10 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, updateSectio
         updateSection({ ...section, entries: newEntries });
     };
     
+    const isMainHeading = section.title === 'EDUCATION' || section.title === 'PROFESSIONAL EXPERIENCE';
+
     // Special rendering for the EDUCATION section
     if (section.title === 'EDUCATION' && isStandardSection(section)) {
-        const mastersEntry = section.entries[0];
-        const bachelorsEntry = section.entries[1];
-        const otherEntries = section.entries.slice(2);
-
         return (
             <div className="mt-4 relative group">
                 <div 
@@ -112,45 +110,50 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, updateSectio
                 >
                     <TrashIcon className="w-5 h-5" />
                 </div>
-                 <h2 className="font-bold uppercase tracking-wider text-gray-800 mt-3 mb-2 pt-1 border-b-2 border-gray-300" style={{ fontSize: '11pt' }}>
+                 <h2 
+                    className={`font-bold uppercase tracking-wider mt-3 mb-2 ${isMainHeading ? 'text-black px-2' : 'text-gray-800 pt-1 border-b-2 border-gray-300'}`}
+                    style={{
+                        fontSize: '11pt',
+                        ...(isMainHeading && {
+                            backgroundColor: '#bfbfbf',
+                            height: '0.22in',
+                            display: 'flex',
+                            alignItems: 'center'
+                        })
+                    }}
+                 >
                     {section.title}
                 </h2>
 
-                {/* --- Masters Subsection --- */}
-                <h3 className="font-bold text-gray-700 mt-6 mb-2 text-sm uppercase tracking-wider pl-1">Masters</h3>
-                {mastersEntry && (
-                    <EditableEntry
-                        key={mastersEntry.id}
-                        entry={mastersEntry}
-                        updateEntry={(updated) => updateEntry(0, updated)}
-                        deleteEntry={() => {}} /* This entry is not deletable */
-                        isDeletable={false}
-                    />
-                )}
+                {section.entries.map((entry, index) => {
+                    if (entry.isBoxed) {
+                        return (
+                             <div 
+                                key={entry.id}
+                                className="flex justify-between items-center text-black px-2 mt-3"
+                                style={{
+                                    backgroundColor: '#d9d9d9',
+                                    height: '0.22in',
+                                    fontSize: '11pt'
+                                }}
+                            >
+                                <span dangerouslySetInnerHTML={{ __html: entry.title }} />
+                                <span className="italic pl-4" dangerouslySetInnerHTML={{ __html: entry.date }} />
+                            </div>
+                        )
+                    }
+                    return (
+                         <div className="mt-4" key={entry.id}>
+                            <EditableEntry
+                                entry={entry}
+                                updateEntry={(updated) => updateEntry(index, updated)}
+                                deleteEntry={() => deleteEntry(index)}
+                                isDeletable={true}
+                            />
+                        </div>
+                    );
+                })}
 
-                {/* --- Bachelors Subsection --- */}
-                <h3 className="font-bold text-gray-700 mt-6 mb-2 text-sm uppercase tracking-wider pl-1">Bachelors</h3>
-                {bachelorsEntry && (
-                    <EditableEntry
-                        key={bachelorsEntry.id}
-                        entry={bachelorsEntry}
-                        updateEntry={(updated) => updateEntry(1, updated)}
-                        deleteEntry={() => {}} /* This entry is not deletable */
-                        isDeletable={false}
-                    />
-                )}
-
-                {/* --- Other Education Subsection --- */}
-                <h3 className="font-bold text-gray-700 mt-6 mb-2 text-sm uppercase tracking-wider pl-1">10th, 12th &amp; Other</h3>
-                {otherEntries.map((entry, index) => (
-                    <EditableEntry
-                        key={entry.id}
-                        entry={entry}
-                        updateEntry={(updated) => updateEntry(index + 2, updated)}
-                        deleteEntry={() => deleteEntry(index + 2)}
-                        isDeletable={true}
-                    />
-                ))}
                 <div className="mt-4">
                     <button onClick={addEntry} className="px-3 py-1.5 text-xs font-semibold text-brand-primary bg-indigo-100 rounded-md hover:bg-indigo-200 flex items-center gap-1">
                         <PlusIcon className="w-4 h-4" /> Add Other Education
@@ -171,7 +174,18 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, updateSectio
                 <TrashIcon className="w-5 h-5" />
             </div>
 
-            <h2 className="font-bold uppercase tracking-wider text-gray-800 mt-3 mb-2 pt-1 border-b-2 border-gray-300" style={{ fontSize: '11pt' }}>
+            <h2 
+                className={`font-bold uppercase tracking-wider mt-3 mb-2 ${isMainHeading ? 'text-black px-2' : 'text-gray-800 pt-1 border-b-2 border-gray-300'}`}
+                style={{
+                    fontSize: '11pt',
+                    ...(isMainHeading && {
+                        backgroundColor: '#bfbfbf',
+                        height: '0.22in',
+                        display: 'flex',
+                        alignItems: 'center'
+                    })
+                }}
+            >
                 {section.title}
             </h2>
 
