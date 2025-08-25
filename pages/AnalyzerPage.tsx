@@ -13,7 +13,7 @@ import { EditIcon } from '../components/icons/EditIcon';
 import type { AnalysisResult as AnalysisResultType } from '../types';
 
 // --- Gemini AI Setup ---
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const analysisSchema = {
     type: Type.OBJECT,
